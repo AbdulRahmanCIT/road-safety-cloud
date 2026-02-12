@@ -86,14 +86,27 @@ app.post('/api/road-event', async (req, res) => {
 
       const insertQuery = `
 INSERT INTO road_events
-(event_type, latitude, longitude, location, speed_kmph, accel_z, gyro_y, severity, status, vehicle_count)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-RETURNING *;`;
+(event_type, latitude, longitude, location,
+ speed_kmph, accel_z, gyro_y, severity,
+ status, vehicle_count)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Pending',1)
+RETURNING *;
+`;
 
-await pool.query(insertQuery,[event_type,latitude,longitude,addressName,speed_kmph,accel_z,gyro_y,severity,"Pending",1]);
+await pool.query(insertQuery, [
+  event_type,
+  Number(latitude),
+  Number(longitude),
+  addressName,
+  Number(speed_kmph),
+  Number(accel_z),
+  Number(gyro_y),
+  severity
+]);
 
 console.log("NEW LOCATION: Created a new unique record.");
-res.status(201).json({message:"Created new record"});
+res.status(201).json({ message: "Created new record" });
+
 
 
   } catch (err) { 
