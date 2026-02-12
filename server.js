@@ -15,6 +15,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public'))); 
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+
 console.log(
   "DATABASE_URL:",
   process.env.DATABASE_URL ? "Loaded ✅" : "Missing ❌"
