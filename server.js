@@ -95,13 +95,19 @@ app.post('/api/road-event', async (req, res) => {
   }
 });
 
-app.get('/api/dashboard', async (req, res) => {
+// GET all road events
+app.get('/api/road-events', async (req, res) => {
   try {
-    const tableResult = await pool.query("SELECT * FROM road_events ORDER BY created_at DESC LIMIT 10");
-    const mapResult = await pool.query("SELECT * FROM road_events WHERE latitude != 0");
-    res.json({ table: tableResult.rows, mapPoints: mapResult.rows });
-  } catch (err) { res.status(500).send(err.message); }
+    const result = await pool.query(
+      'SELECT * FROM road_events ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fetch Error:', err);
+    res.status(500).json({ error: 'Failed to fetch road events' });
+  }
 });
+
 
 app.listen(port, '0.0.0.0', () => {
   console.log(`✅ Server Running at http://localhost:${port}`);
