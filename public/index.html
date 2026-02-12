@@ -1,193 +1,339 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pothole Traffic Monitor</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
+<title>Road Hazard Intelligence</title>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
 <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f4f7fe; margin: 0; padding: 20px; color: #2b3674; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .header h1 { font-size: 24px; font-weight: 700; margin: 0; }
-    
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
-    .value { font-size: 32px; font-weight: 700; color: #4318FF; }
-    
-    #map { height: 450px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 15px; overflow: hidden; }
-    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e0e5f2; }
-    th { background: #f8f9fc; color: #a3aed0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-    td { font-size: 14px; font-weight: 600; }
-    
-    .badge { padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; }
-    .bg-high { background: #fee2e2; color: #ef4444; }
-    .bg-mod { background: #fef3c7; color: #d97706; }
-    .bg-low { background: #d1fae5; color: #059669; }
-    
-    .v-count { color: #4318FF; font-weight: 800; font-size: 18px; }
-    .btn-refresh { background: #4318FF; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
-    .btn-refresh:hover { background: #3311CC; }
-</style>
-```
+body{
+margin:0;
+font-family:Inter, sans-serif;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:white;
+}
 
+/* LOGIN */
+#loginPage{
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:
+radial-gradient(circle at 20% 20%,#2563eb55,transparent),
+radial-gradient(circle at 80% 70%,#22c55e55,transparent),
+linear-gradient(135deg,#020617,#0f172a);
+}
+
+.login-box{
+background:#020617dd;
+padding:40px;
+border-radius:18px;
+width:320px;
+box-shadow:0 0 40px #2563eb55;
+text-align:center;
+}
+
+.login-box input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:none;
+border-radius:8px;
+background:#0f172a;
+color:white;
+}
+
+.login-box button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:linear-gradient(90deg,#2563eb,#22c55e);
+color:white;
+font-weight:600;
+cursor:pointer;
+}
+
+/* DASHBOARD */
+#dashboard{display:none;padding:20px;}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.title{font-size:34px;font-weight:700;}
+
+.btn-group{display:flex;gap:10px;}
+
+.btn{
+padding:8px 18px;
+border:none;
+border-radius:8px;
+color:white;
+font-weight:600;
+cursor:pointer;
+}
+
+.refresh{background:linear-gradient(90deg,#2563eb,#22c55e);}
+.logout{background:linear-gradient(90deg,#ef4444,#f97316);}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+margin-bottom:20px;
+}
+
+.card{background:#020617;padding:18px;border-radius:14px;}
+.value{font-size:26px;font-weight:700;}
+
+.chart-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+.chart-box{
+background:#020617;
+border-radius:14px;
+height:260px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+#map{height:340px;border-radius:14px;margin-bottom:20px;}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#020617;
+border-radius:14px;
+overflow:hidden;
+}
+
+th,td{padding:12px;border-bottom:1px solid #1e293b;}
+th{background:#0f172a;}
+tr:hover{background:#111827;cursor:pointer;}
+</style>
 </head>
+
 <body>
 
-```
-<div class="header">
-    <h1>🚧 Pothole Incident Monitor</h1>
-    <button class="btn-refresh" onclick="fetchData()">Manual Sync</button>
+<!-- LOGIN -->
+<div id="loginPage">
+<div class="login-box">
+<h2>IoT Admin Login</h2>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
 </div>
 
-<div class="kpi-container">
-    <div class="card">
-        <small style="color:#a3aed0">Unique Locations</small>
-        <div class="value" id="totalCount">0</div>
-    </div>
-    <div class="card">
-        <small style="color:#a3aed0">Critical Severity</small>
-        <div class="value" style="color:#ef4444" id="highSevCount">0</div>
-    </div>
-    <div class="card">
-        <small style="color:#a3aed0">System Status</small>
-        <div class="value" style="color:#059669">ONLINE</div>
-    </div>
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+<div class="header">
+<div class="title">🚧 Road Hazard Intelligence</div>
+
+<div class="btn-group">
+<button class="btn refresh" onclick="loadData()">Refresh</button>
+<button class="btn logout" onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div class="cards">
+<div class="card">Total Hazards<div class="value" id="total">0</div></div>
+<div class="card">High Severity<div class="value" id="high">0</div></div>
+<div class="card">Moderate<div class="value" id="mod">0</div></div>
+<div class="card">Resolved<div class="value" id="res">0</div></div>
+</div>
+
+<div class="chart-grid">
+<div class="chart-box"><canvas id="sevChart"></canvas></div>
+<div class="chart-box"><canvas id="typeChart"></canvas></div>
 </div>
 
 <div id="map"></div>
 
-<div class="card" style="padding:0; overflow:hidden;">
-    <div style="padding:20px;">
-        <h3 style="margin:0;">Recent Activity (Top 10)</h3>
-        <small style="color:#a3aed0">Automatically groups vehicles detected in the same area</small>
-    </div>
-    <table id="mainTable">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Location Name</th>
-                <th>Coordinates</th>
-                <th style="text-align:center;">Vehicles</th>
-                <th>Impact</th>
-                <th>Severity</th>
-                <th>Last Update</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Type</th>
+<th>Location</th>
+<th>Vehicles</th>
+<th>Shock Value</th>
+<th>Severity</th>
+<th>Status</th>
+<th>Date & Time</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
 </div>
-```
 
 <script>
-const map = L.map('map').setView([12.9716, 77.5946], 13);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap'
-}).addTo(map);
+/* LOGIN FIX */
+function login(){
 
-let markers = [];
+const user=document.getElementById("username").value;
+const pass=document.getElementById("password").value;
 
-async function fetchData() {
-    try {
-        const res = await fetch('https://road-hazard-monitor.onrender.com/api/road-events');
-        const data = await res.json();
+if(user==="admin" && pass==="1234"){
 
-        renderDashboard({
-            mapPoints: data,
-            table: data
-        });
+document.getElementById("loginPage").style.display="none";
+document.getElementById("dashboard").style.display="block";
 
-    } catch (err) {
-        console.error("Fetch Error:", err);
-    }
+initMap();
+loadData();
+
+}
+else{
+alert("Invalid Login");
+}
 }
 
-function renderDashboard(data) {
+function logout(){location.reload();}
 
-    document.getElementById('totalCount').innerText = data.mapPoints.length;
+/* MAP */
+let map,cluster,heatLayer;
+let markersById={};
 
-    const highSev = data.table.filter(
-        x => x.severity.toLowerCase() === 'high'
-    ).length;
+function initMap(){
 
-    document.getElementById('highSevCount').innerText = highSev;
+map=L.map('map',{attributionControl:false})
+.setView([20.5937,78.9629],5);
 
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
+L.tileLayer(
+'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+).addTo(map);
 
-    data.mapPoints.forEach(r => {
-        if (r.latitude && r.latitude != 0) {
+cluster=L.markerClusterGroup();
+map.addLayer(cluster);
 
-            const color =
-                r.event_type.toLowerCase() === 'pothole'
-                ? '#ef4444'
-                : '#f59e0b';
+/* Bengaluru Marker */
+L.marker([12.9716,77.5946])
+.addTo(map)
+.bindPopup("Bengaluru HQ");
 
-            const marker = L.circleMarker(
-                [r.latitude, r.longitude],
-                {
-                    radius: 9,
-                    fillColor: color,
-                    color: "#ffffff",
-                    weight: 2,
-                    fillOpacity: 0.9
-                }
-            ).addTo(map).bindPopup(`
-                <b>${r.event_type}</b><br>
-                Location: ${r.location}<br>
-                Vehicles: <b>${r.vehicle_count || 1}</b>
-            `);
-
-            markers.push(marker);
-        }
-    });
-
-    const tbody = document.querySelector("#mainTable tbody");
-    tbody.innerHTML = "";
-
-    data.table.forEach(r => {
-
-        const badgeClass =
-            r.severity === 'High' ? 'bg-high' :
-            r.severity === 'Moderate' ? 'bg-mod' :
-            'bg-low';
-
-        tbody.innerHTML += `
-            <tr>
-                <td>#${r.id}</td>
-                <td>${r.event_type}</td>
-                <td>${r.location}</td>
-                <td style="font-family:monospace;font-size:12px;color:#a3aed0;">
-                    ${r.latitude}, ${r.longitude}
-                </td>
-                <td style="text-align:center;" class="v-count">
-                    ${r.vehicle_count || 1}
-                </td>
-                <td>${r.accel_z} G</td>
-                <td><span class="badge ${badgeClass}">
-                    ${r.severity}
-                </span></td>
-                <td>
-                    ${new Date(r.created_at).toLocaleTimeString()}
-                </td>
-            </tr>
-        `;
-    });
+setTimeout(()=>map.invalidateSize(),500);
 }
 
-fetchData();
-setInterval(fetchData, 5000);
+/* LOAD DATA */
+async function loadData(){
+
+const res=await fetch(
+"https://road-hazard-monitor.onrender.com/api/road-events"
+);
+
+const data=await res.json();
+
+/* KPI */
+total.innerText=data.length;
+high.innerText=data.filter(d=>d.severity==="High").length;
+mod.innerText=data.filter(d=>d.severity==="Moderate").length;
+res.innerText=data.filter(d=>d.status==="Resolved").length;
+
+/* CLEAR */
+tbody.innerHTML="";
+cluster.clearLayers();
+markersById={};
+
+if(heatLayer) map.removeLayer(heatLayer);
+
+const heat=[];
+
+/* TABLE + MAP */
+data.slice(0,10).forEach(d=>{
+
+if(d.latitude && d.longitude){
+
+const marker=L.marker(
+[d.latitude,d.longitude]
+).bindPopup(`<b>${d.event_type}</b><br>${d.location}`);
+
+cluster.addLayer(marker);
+markersById[d.id]=marker;
+
+heat.push([d.latitude,d.longitude,0.6]);
+}
+
+const row=document.createElement("tr");
+
+row.innerHTML=`
+<td>${d.id}</td>
+<td>${d.event_type}</td>
+<td>${d.location}</td>
+<td>${d.vehicle_count}</td>
+<td>${d.accel_z}</td>
+<td>${d.severity}</td>
+<td>${d.status}</td>
+<td>${new Date(d.created_at).toLocaleString()}</td>
+`;
+
+row.onclick=()=>{
+const m=markersById[d.id];
+if(m){
+map.setView(m.getLatLng(),16);
+m.openPopup();
+}
+};
+
+tbody.appendChild(row);
+
+});
+
+/* HEATMAP */
+heatLayer=L.heatLayer(heat,{radius:25}).addTo(map);
+
+/* CHARTS */
+const sev={High:0,Moderate:0,Low:0};
+const type={Pothole:0,"Speed Breaker":0};
+
+data.forEach(d=>{
+if(sev[d.severity]!=undefined) sev[d.severity]++;
+if(type[d.event_type]!=undefined) type[d.event_type]++;
+});
+
+new Chart(sevChart,{
+type:"doughnut",
+data:{labels:Object.keys(sev),
+datasets:[{data:Object.values(sev)}]},
+options:{cutout:"65%"}
+});
+
+new Chart(typeChart,{
+type:"bar",
+data:{
+labels:["Pothole","Speed Breaker"],
+datasets:[{data:[
+type["Pothole"],
+type["Speed Breaker"]
+]}]
+}
+});
+
+}
+
 </script>
-
 </body>
 </html>
