@@ -84,25 +84,28 @@ app.post('/api/road-event', async (req, res) => {
         } catch (e) { addressName = "Location Lookup Error"; }
     }
 
-      const insertQuery = `
+     const insertQuery = `
 INSERT INTO road_events
 (event_type, latitude, longitude, location,
- speed_kmph, accel_z, gyro_y, severity,
- status, vehicle_count)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Pending',1)
-RETURNING *;
-`;
+ speed_kmph, accel_z, gyro_y, severity, status, vehicle_count)
+VALUES
+($1::text,$2::numeric,$3::numeric,$4::text,
+ $5::numeric,$6::numeric,$7::numeric,$8::text,$9::text,$10::int)
+RETURNING *;`;
 
 await pool.query(insertQuery, [
   event_type,
-  Number(latitude),
-  Number(longitude),
+  latitude,
+  longitude,
   addressName,
-  Number(speed_kmph),
-  Number(accel_z),
-  Number(gyro_y),
-  severity
+  speed_kmph,
+  accel_z,
+  gyro_y,
+  severity || "Low",
+  "Pending",
+  1
 ]);
+
 
 console.log("NEW LOCATION: Created a new unique record.");
 res.status(201).json({ message: "Created new record" });
