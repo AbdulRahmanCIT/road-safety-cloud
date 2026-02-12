@@ -5,17 +5,20 @@ const { Pool } = require('pg');
 const axios = require('axios');
 const path = require('path');
 
-console.log(
-  "DATABASE_URL:",
-  process.env.DATABASE_URL ? "Loaded ✅" : "Missing ❌"
-);
+
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
+
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public'))); 
+
+console.log(
+  "DATABASE_URL:",
+  process.env.DATABASE_URL ? "Loaded ✅" : "Missing ❌"
+);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
