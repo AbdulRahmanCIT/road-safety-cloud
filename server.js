@@ -13,12 +13,12 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public'))); 
 
 const pool = new Pool({
-  user: 'postgres',         
-  host: 'localhost',
-  database: 'sic12', 
-  password: 'Rahman@11893',
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
+
 
 app.post('/api/road-event', async (req, res) => {
   try {
