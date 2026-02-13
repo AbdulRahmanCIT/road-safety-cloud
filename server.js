@@ -186,7 +186,6 @@ app.get('/api/road-events', async (req, res) => {
 
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
-=======
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
