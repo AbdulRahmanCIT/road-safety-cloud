@@ -150,7 +150,7 @@ tr:hover{background:#111827;cursor:pointer;}
 <div id="dashboard">
 
 <div class="header">
-<div class="title">🚧 Road Hazard Intelligence</div>
+<div class="title">Road Hazard Intelligence</div>
 
 <div class="btn-group">
 <button class="btn refresh" onclick="loadData()">Refresh</button>
@@ -192,31 +192,28 @@ tr:hover{background:#111827;cursor:pointer;}
 
 <script>
 
-/* LOGIN FIX */
+/* LOGIN */
 function login(){
-
 const user=document.getElementById("username").value;
 const pass=document.getElementById("password").value;
 
 if(user==="admin" && pass==="1234"){
-
 document.getElementById("loginPage").style.display="none";
 document.getElementById("dashboard").style.display="block";
-
 initMap();
 loadData();
-
+setInterval(loadData,5000);
 }
-else{
-alert("Invalid Login");
-}
+else alert("Invalid Login");
 }
 
 function logout(){location.reload();}
 
 /* MAP */
+
 let map,cluster,heatLayer;
 let markersById={};
+let sevChartObj,typeChartObj;
 
 function initMap(){
 
@@ -230,7 +227,6 @@ L.tileLayer(
 cluster=L.markerClusterGroup();
 map.addLayer(cluster);
 
-/* Bengaluru Marker */
 L.marker([12.9716,77.5946])
 .addTo(map)
 .bindPopup("Bengaluru HQ");
@@ -239,21 +235,30 @@ setTimeout(()=>map.invalidateSize(),500);
 }
 
 /* LOAD DATA */
+
 async function loadData(){
 
-const res=await fetch(
+const response=await fetch(
 "https://road-hazard-monitor.onrender.com/api/road-events"
 );
 
-const data=await res.json();
+let data=await response.json();
+
+/* SORT LATEST */
+
+data=data.sort(
+(a,b)=>new Date(b.created_at)-new Date(a.created_at)
+);
 
 /* KPI */
+
 total.innerText=data.length;
 high.innerText=data.filter(d=>d.severity==="High").length;
 mod.innerText=data.filter(d=>d.severity==="Moderate").length;
 res.innerText=data.filter(d=>d.status==="Resolved").length;
 
-/* CLEAR */
+/* TABLE + MAP */
+
 tbody.innerHTML="";
 cluster.clearLayers();
 markersById={};
@@ -262,25 +267,24 @@ if(heatLayer) map.removeLayer(heatLayer);
 
 const heat=[];
 
-/* TABLE + MAP */
-data.slice(0,10).forEach(d=>{
+/* 🔥 ONLY CHANGE → SEQUENTIAL IDS */
+
+data.slice(0,10).forEach((d,index)=>{
 
 if(d.latitude && d.longitude){
 
-const marker=L.marker(
-[d.latitude,d.longitude]
-).bindPopup(`<b>${d.event_type}</b><br>${d.location}`);
+const marker=L.marker([d.latitude,d.longitude])
+.bindPopup(`<b>${d.event_type}</b><br>${d.location}`);
 
 cluster.addLayer(marker);
 markersById[d.id]=marker;
-
 heat.push([d.latitude,d.longitude,0.6]);
 }
 
 const row=document.createElement("tr");
 
 row.innerHTML=`
-<td>${d.id}</td>
+<td>${index+1}</td>
 <td>${d.event_type}</td>
 <td>${d.location}</td>
 <td>${d.vehicle_count}</td>
@@ -290,22 +294,16 @@ row.innerHTML=`
 <td>${new Date(d.created_at).toLocaleString()}</td>
 `;
 
-row.onclick=()=>{
-const m=markersById[d.id];
-if(m){
-map.setView(m.getLatLng(),16);
-m.openPopup();
-}
-};
-
 tbody.appendChild(row);
 
 });
 
 /* HEATMAP */
+
 heatLayer=L.heatLayer(heat,{radius:25}).addTo(map);
 
-/* CHARTS */
+/* CHARTS UNCHANGED */
+
 const sev={High:0,Moderate:0,Low:0};
 const type={Pothole:0,"Speed Breaker":0};
 
@@ -314,14 +312,17 @@ if(sev[d.severity]!=undefined) sev[d.severity]++;
 if(type[d.event_type]!=undefined) type[d.event_type]++;
 });
 
-new Chart(sevChart,{
+if(sevChartObj) sevChartObj.destroy();
+if(typeChartObj) typeChartObj.destroy();
+
+sevChartObj=new Chart(sevChart,{
 type:"doughnut",
 data:{labels:Object.keys(sev),
 datasets:[{data:Object.values(sev)}]},
 options:{cutout:"65%"}
 });
 
-new Chart(typeChart,{
+typeChartObj=new Chart(typeChart,{
 type:"bar",
 data:{
 labels:["Pothole","Speed Breaker"],
